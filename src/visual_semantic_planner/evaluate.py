@@ -1,6 +1,5 @@
 """
-Quantitative Evaluation Suite for Skip-Gram Semantic Manifold, Cross-Modal Alignment,
-and Neuro-Symbolic PDDL Planning.
+Quantitative Evaluation Suite for Skip-Gram Semantic Manifold and Cross-Modal Alignment.
 
 Implements:
 1. Automated Manifold Integrity & Grading Suite (`evaluate_embedding_manifold`):
@@ -11,9 +10,6 @@ Implements:
    - Semantic & Taxonomic Analogy Solver MRR@K (0.6188)
    - Pseudo-Ground-Truth Recall@10 (0.5423) and Hit Rate@10 (0.8933) via `JsonEvaluator`
 2. 2D t-SNE Manifold Visualization (`visualize_tsne`).
-3. End-to-End Neuro-Symbolic PDDL Benchmark Suite (`run_planning_benchmark_suite`):
-   - 9 Symbolic Text-to-Plan scenarios (Depths 1–4)
-   - 9 Sub-Symbolic Image/Visual-to-Plan scenarios (Depths 1–4)
 """
 
 from __future__ import annotations
@@ -28,7 +24,6 @@ import torch
 import torch.nn.functional as F
 from sklearn.manifold import TSNE
 
-from .pddl_planner import plan_generator
 from .skipgram import build_my_embeddings, find_similar_words, solve_analogy
 from .visual_projection import VALID_CIFAR_VOCAB, load_visual_projection_model
 
@@ -58,133 +53,6 @@ RAW_TAXONOMY: Dict[str, List[str]] = {
     "vehicles_2": ["lawn_mower", "rocket", "streetcar", "tank", "tractor"],
 }
 
-# Canonical 9 PDDL benchmark scenarios covering manipulation, tool use, room traversal, and unstacking
-BENCHMARK_SCENARIOS: List[Dict] = [
-    {
-        "name": "Scenario 1: The Prepared Chef (Instant Slice)",
-        "cifar_class": "apple",
-        "initial_state": {
-            "(agent-at lab)",
-            "(holding knife)",
-            "(at ?x lab)",
-            "(whole ?x)",
-            "(clear ?x)",
-        },
-        "goal_state": {"(cut-into-pieces ?x)"},
-        "expected_length": 1,
-    },
-    {
-        "name": "Scenario 2: Basic Slice (Acquire Tool & Slice)",
-        "cifar_class": "pear",
-        "initial_state": {
-            "(agent-at lab)",
-            "(hand-empty)",
-            "(at ?x lab)",
-            "(whole ?x)",
-            "(clear ?x)",
-            "(at knife lab)",
-            "(clear knife)",
-        },
-        "goal_state": {"(cut-into-pieces ?x)"},
-        "expected_length": 2,
-    },
-    {
-        "name": "Scenario 3: The Commuter (Cross-Room Documentation)",
-        "cifar_class": "beetle",
-        "initial_state": {
-            "(agent-at outdoors)",
-            "(holding dslr)",
-            "(at ?x lab)",
-            "(clear ?x)",
-        },
-        "goal_state": {"(documented ?x)"},
-        "expected_length": 2,
-    },
-    {
-        "name": "Scenario 4: Studio Photography (Acquire Camera & Document)",
-        "cifar_class": "orchid",
-        "initial_state": {
-            "(agent-at lab)",
-            "(hand-empty)",
-            "(at dslr lab)",
-            "(clear dslr)",
-            "(at ?x lab)",
-            "(clear ?x)",
-        },
-        "goal_state": {"(documented ?x)"},
-        "expected_length": 2,
-    },
-    {
-        "name": "Scenario 5: Tabletop Plating (Pick Up & Stack on Plate)",
-        "cifar_class": "orange",
-        "initial_state": {
-            "(agent-at lab)",
-            "(hand-empty)",
-            "(at ?x lab)",
-            "(clear ?x)",
-            "(at plate lab)",
-            "(clear plate)",
-            "(is-surface plate)",
-        },
-        "goal_state": {"(on-top ?x plate)"},
-        "expected_length": 2,
-    },
-    {
-        "name": "Scenario 6: The Hungry Architect (Free Hand, Pick Knife, Slice)",
-        "cifar_class": "sweet_pepper",
-        "initial_state": {
-            "(agent-at lab)",
-            "(holding skyscraper)",
-            "(at ?x lab)",
-            "(whole ?x)",
-            "(clear ?x)",
-            "(at knife lab)",
-            "(clear knife)",
-        },
-        "goal_state": {"(cut-into-pieces ?x)"},
-        "expected_length": 3,
-    },
-    {
-        "name": "Scenario 7: Field Expedition (Fetch Camera & Document Outdoors)",
-        "cifar_class": "maple_tree",
-        "initial_state": {
-            "(agent-at lab)",
-            "(hand-empty)",
-            "(at dslr lab)",
-            "(clear dslr)",
-            "(at ?x outdoors)",
-            "(clear ?x)",
-        },
-        "goal_state": {"(documented ?x)"},
-        "expected_length": 3,
-    },
-    {
-        "name": "Scenario 8: Jurassic Park Protocol (Outdoor Retrieval to Lab)",
-        "cifar_class": "dinosaur",
-        "initial_state": {
-            "(agent-at lab)",
-            "(hand-empty)",
-            "(at ?x outdoors)",
-            "(whole ?x)",
-            "(clear ?x)",
-        },
-        "goal_state": {"(at ?x lab)"},
-        "expected_length": 4,
-    },
-    {
-        "name": "Scenario 9: Marine Specimen Relocation (Unstack & Transport)",
-        "cifar_class": "crab",
-        "initial_state": {
-            "(agent-at lab)",
-            "(hand-empty)",
-            "(at ?x outdoors)",
-            "(whole ?x)",
-            "(clear ?x)",
-        },
-        "goal_state": {"(at ?x lab)"},
-        "expected_length": 4,
-    },
-]
 
 
 class JsonEvaluator:
@@ -488,68 +356,3 @@ def synthesize_aligned_image_tensor(
     res = img.detach().cpu().squeeze(0)
     _SYNTHETIC_IMAGE_CACHE[target_cifar_word] = res
     return res.clone()
-
-
-def run_planning_benchmark_suite(
-    domain_file: str = "domain.pddl",
-    skipgram_path: str = "best_skipgram_523words.pth",
-    projection_path: str = "best_cifar100_projection.pth",
-    include_visual: bool = True,
-) -> Dict:
-    """
-    Execute all 9 canonical PDDL planning scenarios across both Symbolic Text and
-    Sub-Symbolic Visual modalities (18 total plans).
-    """
-    text_results: List[Dict] = []
-    image_results: List[Dict] = []
-
-    for scenario in BENCHMARK_SCENARIOS:
-        plan_txt = plan_generator(
-            input_data=scenario["cifar_class"],
-            initial_state=scenario["initial_state"],
-            goal_state=scenario["goal_state"],
-            domain_file=domain_file,
-            skipgram_path=skipgram_path,
-            projection_path=projection_path,
-            verbose=False,
-        )
-        text_results.append({
-            "scenario": scenario["name"],
-            "target": scenario["cifar_class"],
-            "success": plan_txt is not None and len(plan_txt) == scenario["expected_length"],
-            "plan": plan_txt,
-            "steps": len(plan_txt) if plan_txt else 0,
-        })
-
-        if include_visual:
-            img_tensor = synthesize_aligned_image_tensor(
-                scenario["cifar_class"], skipgram_path=skipgram_path, projection_path=projection_path
-            )
-            plan_img = plan_generator(
-                input_data=img_tensor,
-                initial_state=scenario["initial_state"],
-                goal_state=scenario["goal_state"],
-                domain_file=domain_file,
-                skipgram_path=skipgram_path,
-                projection_path=projection_path,
-                verbose=False,
-            )
-            image_results.append({
-                "scenario": scenario["name"],
-                "target": scenario["cifar_class"],
-                "success": plan_img is not None and len(plan_img) == scenario["expected_length"],
-                "plan": plan_img,
-                "steps": len(plan_img) if plan_img else 0,
-            })
-
-    text_passed = sum(1 for r in text_results if r["success"])
-    image_passed = sum(1 for r in image_results if r["success"])
-
-    return {
-        "text_plans_created": text_passed,
-        "text_plans_total": len(text_results),
-        "image_plans_created": image_passed,
-        "image_plans_total": len(image_results),
-        "text_results": text_results,
-        "image_results": image_results,
-    }

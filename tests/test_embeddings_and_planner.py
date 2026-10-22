@@ -30,22 +30,11 @@ import torch
 REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT / "src"))
 
+from visual_semantic_planner.visual_projection import VALID_CIFAR_VOCAB
 from visual_semantic_planner import (
-    BENCHMARK_SCENARIOS,
-    CIFAR_100_CLASSES,
-    VALID_CIFAR_VOCAB,
-    Action,
-    ActionGrounder,
     ImageEncoder,
-    PDDLParser,
-    Predicate,
     SkipGramModel,
-    State,
-    astar_search,
-    bfs_search,
     build_my_embeddings,
-    classify_image_to_pddl_object,
-    clean_object_name,
     compute_contrastive_loss,
     compute_embedding_stats,
     compute_fitness,
@@ -53,11 +42,8 @@ from visual_semantic_planner import (
     find_similar_words,
     get_cifar100_embeddings,
     load_visual_projection_model,
-    plan_generator,
-    run_planning_benchmark_suite,
     solve_analogy,
     synthesize_aligned_image_tensor,
-    verify_plan,
 )
 
 
@@ -140,55 +126,3 @@ def test_visual_projection_checkpoint_and_forward_pass():
     loss = compute_contrastive_loss(proj, text_batch, temperature=0.07)
     assert loss.ndim == 0
     assert float(loss.item()) > 0.0
-
-
-def test_cifar_to_pddl_sanitization():
-    """Verify CIFAR-100 compound and tree names sanitize cleanly to PDDL syntax."""
-    assert clean_object_name("maple_tree") == "maple"
-    assert clean_object_name("oak_tree") == "oak"
-    assert clean_object_name("palm_tree") == "palm"
-    assert clean_object_name("pine_tree") == "pine"
-    assert clean_object_name("willow_tree") == "willow"
-    assert clean_object_name("aquarium_fish") == "aquarium-fish"
-    assert clean_object_name("sweet_pepper") == "sweet-pepper"
-    assert clean_object_name("pickup_truck") == "pickup-truck"
-    assert clean_object_name("dinosaur") == "dinosaur"
-
-
-def test_pddl_domain_and_problem_parsing():
-    """Verify PDDLParser extracts all 7 action schemas, 100 CIFAR items, 2 tools, and 349 init predicates."""
-    actions = PDDLParser.parse_domain()
-    assert len(actions) == 7
-    assert set(actions.keys()) == {
-        "walk-between-rooms",
-        "pick-up",
-        "put-down",
-        "stack",
-        "unstack",
-        "slice-object",
-        "take-photo",
-    }
-
-    objs, init_state, _ = PDDLParser.parse_problem()
-    assert len(objs["item"] - {"knife", "dslr"}) == 100
-    assert objs["tool"] == {"knife", "dslr"}
-    assert len(init_state.predicates) == 349
-
-    grounder = ActionGrounder(actions, objs)
-    grounded = grounder.ground_all()
-    assert len(grounded) == 42018
-
-
-def test_multimodal_plan_generator_text_and_image():
-    """Verify end-to-end symbolic text planning and sub-symbolic visual planning across all 9 scenarios."""
-    suite = run_planning_benchmark_suite(include_visual=True)
-    assert suite["text_plans_created"] == 9
-    assert suite["image_plans_created"] == 9
-
-    # Also verify graceful rejection of out-of-domain objects
-    invalid_plan = plan_generator(
-        input_data="alien_spaceship",
-        initial_state={"(agent-at lab)", "(hand-empty)", "(at ?x outdoors)", "(whole ?x)", "(clear ?x)"},
-        goal_state={"(at ?x lab)"},
-    )
-    assert invalid_plan is None

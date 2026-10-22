@@ -1,36 +1,15 @@
 """
-Visual-Semantic Embeddings and Neuro-Symbolic Multimodal PDDL Planning.
+Visual-Semantic Embeddings: Skip-Gram Word2Vec, Manifold Expansion & Cross-Modal CIFAR-100 Projection.
 """
 
 from .evaluate import (
-    BENCHMARK_SCENARIOS,
     RAW_TAXONOMY,
     JsonEvaluator,
     compute_analogy_mrr_at_k,
     compute_prototype_map_at_k,
     evaluate_embedding_manifold,
-    run_planning_benchmark_suite,
     synthesize_aligned_image_tensor,
     visualize_tsne,
-)
-from .pddl_planner import (
-    CIFAR_100_CLASSES,
-    LOCATIONS,
-    TOOLS,
-    Action,
-    ActionGrounder,
-    PDDLParser,
-    Predicate,
-    SearchNode,
-    State,
-    astar_search,
-    bfs_search,
-    create_custom_problem,
-    plan_generator,
-    print_plan_execution,
-    smart_heuristic,
-    validate_user_conditions,
-    verify_plan,
 )
 from .skipgram import (
     VOCAB_523,
@@ -112,30 +91,11 @@ __all__ = [
     "load_visual_projection_model",
     "run_epoch",
     "train_with_early_stopping",
-    "CIFAR_100_CLASSES",
-    "LOCATIONS",
-    "TOOLS",
-    "Action",
-    "ActionGrounder",
-    "PDDLParser",
-    "Predicate",
-    "SearchNode",
-    "State",
-    "astar_search",
-    "bfs_search",
-    "create_custom_problem",
-    "plan_generator",
-    "print_plan_execution",
-    "smart_heuristic",
-    "validate_user_conditions",
-    "verify_plan",
-    "BENCHMARK_SCENARIOS",
     "RAW_TAXONOMY",
     "JsonEvaluator",
     "compute_analogy_mrr_at_k",
     "compute_prototype_map_at_k",
     "evaluate_embedding_manifold",
-    "run_planning_benchmark_suite",
     "synthesize_aligned_image_tensor",
     "visualize_tsne",
 ]

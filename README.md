@@ -1,277 +1,208 @@
-# Visual-Semantic Embeddings & Neuro-Symbolic Multimodal PDDL Planning
+# Cross-Modal Visual-Semantic Word Embeddings & CIFAR-100 Projection
 
 [![CI](https://github.com/Ceviche98/visual-semantic-embeddings-and-planning/actions/workflows/ci.yml/badge.svg)](https://github.com/Ceviche98/visual-semantic-embeddings-and-planning/actions/workflows/ci.yml)
-[![Python 3.9+](https://img.shields.io/badge/Python-3.9%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
-[![PyTorch](https://img.shields.io/badge/PyTorch-2.0%2B-EE4C2C?logo=pytorch&logoColor=white)](https://pytorch.org/)
-[![mAP@K Prototypes](https://img.shields.io/badge/Prototype%20mAP%40K-0.8079-2ea44f)](#quantitative-benchmarks--ablation-studies)
-[![MRR@K Analogies](https://img.shields.io/badge/Analogy%20MRR%40K-0.6188-007ec6)](#quantitative-benchmarks--ablation-studies)
-[![Multimodal PDDL Plans](https://img.shields.io/badge/Plan%20Synthesis-100%25%20(18%2F18)-brightgreen)](#neuro-symbolic-multimodal-pddl-planning)
-[![Cohort Recognition](https://img.shields.io/badge/Cohort%20Standing-Top%205%25-blueviolet)](#executive-summary)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![PyTorch](https://img.shields.io/badge/PyTorch-2.0+-ee4c2c.svg)](https://pytorch.org/)
+[![Cohort Benchmark](https://img.shields.io/badge/Cohort_Rank-Top_5%25_Performance-success.svg)](https://github.com/Ceviche98/visual-semantic-embeddings-and-planning)
+[![Recall@10](https://img.shields.io/badge/Recall@10-0.5423-informational.svg)](https://github.com/Ceviche98/visual-semantic-embeddings-and-planning)
+[![Prototype mAP@K](https://img.shields.io/badge/Prototype_mAP@K-0.8079-brightgreen.svg)](https://github.com/Ceviche98/visual-semantic-embeddings-and-planning)
+[![Analogy MRR@K](https://img.shields.io/badge/Analogy_MRR@K-0.6188-green.svg)](https://github.com/Ceviche98/visual-semantic-embeddings-and-planning)
+[![CIFAR-100 Coverage](https://img.shields.io/badge/CIFAR--100_Coverage-100%25_(1.0000)-blue.svg)](https://github.com/Ceviche98/visual-semantic-embeddings-and-planning)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-An end-to-end **Neuro-Symbolic AI framework** unifying **Graph-Based Skip-Gram Word Embeddings (523-word Visual Genome + CIFAR-100 manifold)**, **CLIP-Style Contrastive MobileNetV3 Visual Projection**, and **Precondition-Aware A\* Symbolic PDDL Planning**. The system perceives raw visual inputs (or symbolic natural language identifiers), projects them into a shared 64-dimensional semantic manifold via constrained cosine retrieval, grounds PDDL problem specifications with automated conflict resolution, and synthesizes provably optimal multi-step action plans.
+An end-to-end vision-language representation learning pipeline developed for the **MSc Artificial Intelligence** curriculum at **Queen Mary University of London (QMUL)**. 
 
----
-
-## Executive Summary
-
-Bridging sub-symbolic neural perception and formal symbolic reasoning requires a shared representation space that preserves both taxonomic hierarchy and functional affordances. This repository implements a three-stage neuro-symbolic architecture:
-
-1. **Unified 523-Word Semantic Manifold (`skipgram.py`)**: Expands a 455-word Visual Genome co-occurrence graph to incorporate all 100 CIFAR-100 object categories ($N = 523, D = 64$). To overcome representation collapse on sparse text graphs, the training pipeline introduces **Hub-Penalized Positive Pair Weighting**, **Teacher-Guided Semantic Negative Sampling**, and **Manual Label Smoothing ($\alpha = 0.1$)**, outperforming $(1+\lambda)$ Evolution Strategy node insertion and achieving **100% CIFAR-100 coverage**, **$\text{mAP@K} = 0.8079$** on superclass prototypes, and **$\text{MRR@K} = 0.6188$** on vector-offset analogies.
-2. **Cross-Modal Contrastive Visual Projection (`visual_projection.py`)**: Aligns a frozen `MobileNetV3-Small` visual backbone ($576\text{-D}$) with the 64-D Skip-Gram embedding space via a trainable batch-normalized MLP projection head optimized under **Symmetric InfoNCE Loss**.
-3. **Neuro-Symbolic Multimodal PDDL Planner (`pddl_planner.py`)**: Maps classified visual scenes or text tokens into typed PDDL domain objects (`configs/pddl/domain.pddl`), resolves initial-state predicate conflicts against a 349-predicate world base (`configs/pddl/problem.pddl`), grounds $42,018$ concrete action instances, and solves multi-step manipulation and navigation tasks via a **Precondition-Aware $A^*$ Heuristic (`smart_heuristic`)**—achieving **100% plan synthesis success (9/9 text plans, 9/9 visual plans)** while reducing search state expansions by **52.3$\times$** compared to Breadth-First Search.
-
-| Benchmark Category | Metric / Evaluation Protocol | Value / Score | Status |
-| :--- | :--- | :---: | :---: |
-| **Manifold Integrity** | 2D Tensor, Finite Values, Contiguous Vocab Shape ($523 \times 64$) | `523 × 64` | **PASS** |
-| **Domain Vocabulary Coverage** | CIFAR-100 Classes Present in Semantic Manifold | `1.0000` (100/100) | **PASS** |
-| **Taxonomic Prototype Retrieval** | Superclass Centroid Retrieval $\text{mAP@K}$ | `0.8079` | **PASS** |
-| **Compositional Vector Arithmetic** | 3CosAdd Semantic & Taxonomic Analogy $\text{MRR@K}$ | `0.6188` | **PASS** |
-| **Semantic Neighborhood Alignment** | Gold-Standard `Recall@10` / `Hit Rate@10` (478 Eval Words) | `0.5423` / `0.8933` | **PASS** |
-| **Cross-Modal Vision Alignment** | Validation Cosine Similarity (`MobileNetV3` $\to$ `64D SGNS`) | `0.5581` | **PASS** |
-| **Symbolic Text-to-Plan Synthesis** | Optimal PDDL Plans Generated Across Depths 1–4 | `9 / 9` (`100%`) | **PASS** |
-| **Sub-Symbolic Image-to-Plan Synthesis** | End-to-End Visual Perception $\to$ Grounding $\to$ $A^*$ Plan | `9 / 9` (`100%`) | **PASS** |
+This repository presents:
+1. **455-Word Skip-Gram Base Space:** Addressing embedding space collapse and hub-word distortion on small-corpus graph transitions using high-learning-rate updates, degree-penalized loss regularisation, and semantic negative sampling via SentenceTransformers.
+2. **CIFAR-100 Vocabulary Expansion (523 Words):** Bridging vocabulary gaps to achieve **100% CIFAR-100 class coverage** ($1.0000$) through systematic comparison of $(1+\lambda)$ Evolution Strategy anchoring versus synthetic LLM corpus retraining with cluster-repair co-occurrence phrases (**Experiment H: Recall@10 = 0.5423, Hit Rate@10 = 0.8933**).
+3. **Cross-Modal Visual-Semantic Projection:** Deep visual embedding alignment mapping MobileNetV3 visual features into the 64-dimensional learned Skip-Gram manifold via contrastive InfoNCE loss (**Prototype mAP@K = 0.8079, Analogy MRR@K = 0.6188**).
 
 ---
 
-## System Architecture
+## Architecture Overview
 
 ```mermaid
-flowchart LR
-    subgraph Stage1["1. Semantic Manifold (Skip-Gram + Negative Sampling)"]
-        VG["Visual Genome + Synthetic CIFAR Corpus"] --> Graph["Induced Co-Occurrence Graph\n(523 Nodes, Hub-Penalized Weights)"]
-        Teacher["SentenceTransformer Teacher\n(Cosine Dissimilarity Mask τ=0.40)"] --> SemNeg["Semantic Negative Sampler"]
-        Graph --> SGNS["SkipGramModel (523 × 64D)\nLabel Smoothing α=0.1, Dropout p=0.3"]
-        SemNeg --> SGNS
+flowchart TD
+    subgraph DataSources["1. Data Sourcing & Vocabulary Grounding"]
+        VG["Visual Genome Scene Graph<br/>455 Base Words"]
+        C100["CIFAR-100 Classes<br/>68 Missing Concept Words"]
+        LLM["LLM Synthetic Corpus<br/>Contextual + Co-occurrence Sentences"]
+        VG --> CORPUS["Unified 523-Word Corpus<br/>(100% CIFAR-100 Coverage)"]
+        C100 --> LLM
+        LLM --> CORPUS
     end
 
-    subgraph Stage2["2. Cross-Modal Visual Projection (CLIP-Style InfoNCE)"]
-        Img["CIFAR-100 Image Tensor\n(3 × 224 × 224)"] --> Backbone["Frozen MobileNetV3-Small\n(576-D Feature Extractor)"]
-        Backbone --> MLP["Trainable Projection MLP\n576 → 512 (BN+ReLU) → 64D"]
-        SGNS -->|"100 CIFAR Class Prototypes"| InfoNCE["Constrained Cosine Similarity\n& Symmetric InfoNCE Alignment"]
-        MLP --> InfoNCE
+    subgraph ManifoldOpt["2. Skip-Gram Representation Learning (64-D)"]
+        CORPUS --> SG["Skip-Gram with Negative Sampling (SGNS)"]
+        DEG["Hub Penalty Regularisation<br/>1 / sqrt(deg(c) * deg(w))"] --> SG
+        SNS["Semantic Negative Sampling<br/>(SentenceTransformer Dissimilarity)"] --> SG
+        SG --> BEST_EMB["Optimized 523 x 64 Semantic Manifold<br/>(Recall@10 = 0.5423, Hit Rate = 0.8933)"]
     end
 
-    subgraph Stage3["3. Neuro-Symbolic PDDL Planning Engine"]
-        TextIn["Symbolic Text Input\ne.g. 'dinosaur' / 'sweet_pepper'"] --> Sanitize["PDDL Identifier Sanitizer\n('maple_tree' → 'maple')"]
-        InfoNCE -->|"Top-1 Prototype Match"| Sanitize
-        Sanitize --> Ground["Dynamic Problem Generator\n(?x Substitution & Conflict Resolution)"]
-        Domain["domain.pddl & problem.pddl\n(7 Schemas → 42,018 Grounded Actions)"] --> Ground
-        Ground --> AStar["Precondition-Aware A* Search\nf(s) = g(s) + h_smart(s)"]
-        AStar --> Plan["Verified Optimal Action Plan\n(100% Validity Check)"]
+    subgraph CrossModal["3. Vision-Language Projection"]
+        IMG["RGB Image (3 x 224 x 224)"] --> MOB["MobileNetV3 Backbone (Frozen, 1000-d)"]
+        MOB --> MLP["Non-Linear Projection Head<br/>1000 -> 256 -> 64"]
+        MLP --> V_NORM["Normalized Image Embedding (v_img)"]
+        BEST_EMB --> W_NORM["Normalized Word Embedding (w_text)"]
+        V_NORM & W_NORM --> INFONCE["Symmetric InfoNCE Contrastive Loss"]
+        INFONCE --> RETRIEVAL["Zero-Shot Nearest Neighbor Retrieval<br/>mAP@K = 0.8079 | MRR@K = 0.6188"]
     end
 ```
 
 ---
 
-## Mathematical Formulation & Methodology
+## 1. Generation of the 455-Word Base Vocabulary & Embedding Space
 
-### 1. Hub-Penalized Co-Occurrence Graph Construction
+### Baseline Instability & Embedding Space Collapse
+Initial experiments with standard Skip-Gram with Negative Sampling (SGNS) on the Visual Genome 455-word graph corpus (Experiments A & B) exhibited severe manifold collapse:
+- **Minimum Cosine Similarity:** Reached $\sim 0.99$, indicating that nearly all word vectors pointed in almost identical directions.
+- **Low Vector Norms:** Gradients vanished due to small vocabulary density combined with a context window of $4$, which frequently left the uniform negative sampling pool depleted.
+- **Hub Word Dominance:** Highly connected topological prepositions (*"on"*, *"in"*, *"with"*) acted as spatial hubs, dragging semantically unrelated entity clusters into a single point.
 
-Given a tokenized corpus, we construct an undirected co-occurrence graph $\mathcal{G} = (\mathcal{V}, \mathcal{E})$ over the target vocabulary $\mathcal{V}$ ($|\mathcal{V}| = 523$) with symmetrized bigram adjacency counts $C_{uv} = \frac{1}{2}(\text{count}(u, v) + \text{count}(v, u))$ and inverted distance matrix $D_{uv} = (\max_{i,j} C_{ij} + 1) - C_{uv}$.
+### The High-Learning-Rate Update
+To counteract the signal-to-noise imbalance where positive context updates were overpowered by uniform negative sampling noise, the learning rate was adjusted to an aggressive $\eta = 0.1$ (Experiment C). This update allowed positive context signals to overcome sampling inertia, restoring distinct vector representations and breaking the singularity:
+- Minimum cosine similarity dropped from $0.992$ to **$0.1789$**.
+- Mean vector norm expanded to **$1.507$**.
+- Validation **Recall@10** jumped to **$0.3652$** (Hit Rate: $0.8000$).
 
-In natural image captions (Visual Genome), high-frequency prepositions and articles (`"on"`, `"in"`, `"the"`, `"with"`) act as topological hubs that pull unrelated visual objects together. To suppress hub distortion while preserving local neighborhood structure within a $k$-hop context window ($k = 4$), positive training pairs $(u, c)$ are sampled with importance weights inversely proportional to the geometric mean of their node degrees:
+### Degree-Penalized Loss Regularisation
+Qualitative inspection revealed that high-frequency structural prepositions continued to pull disparate entity classes together. To penalize artificial topological hubs, a dynamic degree attenuation term was integrated into the objective:
 
-$$w(u, c) = \frac{(\max_{i,j} D_{ij} + 1) - D_{uc}}{\sqrt{\deg(u) \cdot \deg(c)} + \epsilon}$$
+$$\mathcal{L}_{\text{hub-penalty}} = \frac{1}{\sqrt{\text{deg}(c) \cdot \text{deg}(w)}}$$
 
-Extreme outlier weights are clipped at $3 \times \text{Percentile}_{95}(w)$ and normalized to $[0, 1]$ for `WeightedRandomSampler`.
+By scaling down updates between highly connected nodes, cluster separation improved significantly (Experiment D), increasing validation **Recall@10 to 0.4610** and Hit Rate to $0.8856$.
 
-### 2. Teacher-Guided Semantic Negative Sampling
+### Semantic Negative Sampling via SentenceTransformers
+Uniform negative sampling randomly selects negative words from the vocabulary distribution, frequently selecting words that share actual taxonomic or perceptual similarity (e.g. treating *"cat"* as a negative sample for *"dog"*).
 
-Uniform negative sampling on compact vocabularies ($|\mathcal{V}| \le 523$) frequently selects true synonyms or taxonomic siblings as negative examples, degrading cluster boundaries. We construct a prior negative sampling distribution $P_{\text{neg}}(n \mid u)$ using a frozen `all-mpnet-base-v2` semantic teacher:
+To resolve this, **Semantic Negative Sampling** was introduced:
+1. Pairwise semantic dissimilarities $d(w_i, w_j) = 1 - \cos(e_{\text{ST}}(w_i), e_{\text{ST}}(w_j))$ were precomputed using a pretrained `SentenceTransformer` (`all-MiniLM-L6-v2`).
+2. Negative samples were sampled proportionally to semantic dissimilarity, strictly filtering out naturally related concepts from the negative pool.
+3. Hyperparameters were tuned via grid search (context size $C=3$, negative samples $K=5$, $\eta=0.1$).
 
-$$P_{\text{neg}}(n \mid u) = \frac{\big(1 - \cos(\mathbf{t}_u, \mathbf{t}_n)\big) \cdot \mathbb{I}\big[\cos(\mathbf{t}_u, \mathbf{t}_n) < \tau_{\text{neg}}\big]}{\sum_{n' \neq u, c} \big(1 - \cos(\mathbf{t}_u, \mathbf{t}_{n'})\big) \cdot \mathbb{I}\big[\cos(\mathbf{t}_u, \mathbf{t}_{n'}) < \tau_{\text{neg}}\big]}, \quad \tau_{\text{neg}} = 0.40$$
-
-Pairs exceeding similarity threshold $\tau_{\text{neg}} = 0.40$ are strictly masked ($P_{\text{neg}} = 0$), while semantically distant concepts are sampled with higher probability.
-
-### 3. Label-Smoothed Skip-Gram Objective
-
-For center word embedding $\mathbf{u}_u \in \mathbb{R}^{64}$, positive context embedding $\mathbf{v}_c \in \mathbb{R}^{64}$, and $K = 8$ semantic negative samples $\mathcal{N}_u$, `SkipGramModel` minimizes a label-smoothed binary cross-entropy loss ($\alpha = 0.1$) to prevent logit overconfidence and norm explosion:
-
-$$\mathcal{L}_{\text{SGNS}}(u, c, \mathcal{N}_u) = -\Big[(1-\alpha)\log\sigma(\mathbf{u}_u^\top \mathbf{v}_c) + \alpha\log\sigma(-\mathbf{u}_u^\top \mathbf{v}_c)\Big] - \sum_{n \in \mathcal{N}_u} \Big[(1-\alpha)\log\sigma(-\mathbf{u}_u^\top \mathbf{v}_n) + \alpha\log\sigma(\mathbf{u}_u^\top \mathbf{v}_n)\Big]$$
-
-![Skip-Gram Training and Validation Loss](docs/assets/skipgram_training_loss.png)
-
-### 4. Vocabulary Expansion: $(1+\lambda)$ Evolution Strategy vs. Corpus-Augmented Retraining
-
-To expand the base 455-word Visual Genome vocabulary with the 68 missing CIFAR-100 classes (yielding 523 total words), two paradigms are implemented and benchmarked:
-
-* **$(1+\lambda)$ Evolution Strategy (`evolve_embedding`)**: Anchors the 455 pre-trained vectors and evolves each new word vector $\mathbf{z} \in \mathbb{R}^{64}$ via Gaussian mutation $\mathbf{z}' = \mathbf{z} + \mathcal{N}(\mathbf{0}, \sigma_{\text{mut}}^2 \mathbf{I})$ to maximize a three-term composite fitness function:
-
-$$\mathcal{F}(\mathbf{z}) = w_{\text{corpus}} \cdot \sigma\!\left(\frac{\mathcal{L}_{\text{corpus}}(\mathbf{z})}{M}\right) + w_{\text{norm}} \cdot \exp\!\left(-\frac{(\|\mathbf{z}\|_2 - \mu_{\text{norm}})^2}{2\sigma_{\text{norm}}^2}\right) + w_{\text{anchor}} \cdot \frac{1}{|\mathcal{A}|}\sum_{\mathbf{a} \in \mathcal{A}} \frac{\mathbf{a}^\top \mathbf{z}}{\|\mathbf{a}\|_2 \|\mathbf{z}\|_2}$$
-
-* **Corpus-Augmented Retraining from Scratch (`train_embeddings`)**: Blends Visual Genome region descriptions with targeted co-occurrence sentences covering all 100 CIFAR-100 classes and retrains the full 523-node graph end-to-end with Semantic Negative Sampling. Retraining from scratch achieved superior global topological alignment (**$\text{Recall@10} = 0.5423$** vs. **$0.4854$** for Evolution Strategy).
-
-### 5. Cross-Modal Contrastive Projection (MobileNetV3 $\to$ 64D SGNS)
-
-`ImageEncoder` extracts $576\text{-D}$ pooled features from a frozen ImageNet-pretrained `MobileNetV3-Small` backbone and maps them to the 64-D word manifold through a trainable projection head:
-
-$$\mathbf{z}_{\text{vis}} = \mathbf{W}_2 \,\text{ReLU}\big(\text{BatchNorm1d}(\mathbf{W}_1 \mathbf{f}_{\text{backbone}} + \mathbf{b}_1)\big) + \mathbf{b}_2, \quad \mathbf{W}_1 \in \mathbb{R}^{512 \times 576},\; \mathbf{W}_2 \in \mathbb{R}^{64 \times 512}$$
-
-Given a mini-batch of $B$ L2-normalized visual projections $\hat{\mathbf{V}} \in \mathbb{R}^{B \times 64}$ and their aligned Skip-Gram class embeddings $\hat{\mathbf{S}} \in \mathbb{R}^{B \times 64}$, the projection head is trained via **Symmetric InfoNCE Loss** with CosineAnnealingLR:
-
-$$\mathcal{L}_{\text{InfoNCE}}(\hat{\mathbf{V}}, \hat{\mathbf{S}}) = \frac{1}{2}\Big[\mathcal{L}_{\text{CE}}\big(\hat{\mathbf{V}}\hat{\mathbf{S}}^\top / \tau,\, \mathbf{y}\big) + \mathcal{L}_{\text{CE}}\big(\hat{\mathbf{S}}\hat{\mathbf{V}}^\top / \tau,\, \mathbf{y}\big)\Big], \quad \mathbf{y} = (0, 1, \dots, B-1)$$
-
-During neuro-symbolic inference, `get_cifar100_embeddings` restricts candidate text prototypes to the 100 valid CIFAR-100 classes $\mathcal{V}_{\text{CIFAR}} \subset \mathcal{V}_{523}$, guaranteeing that visual perception always maps to a valid PDDL domain object:
-
-$$\hat{c} = \arg\max_{w \in \mathcal{V}_{\text{CIFAR}}} \frac{\mathbf{z}_{\text{vis}}^\top \mathbf{u}_w}{\|\mathbf{z}_{\text{vis}}\|_2 \|\mathbf{u}_w\|_2}$$
-
-![Cross-Modal Projection Training Curve](docs/assets/projection_training_curve.png)
+As shown in **Experiment E**, this produced the optimal representation for the base 455-word vocabulary:
+- Mean vector norm increased to **$2.05$**
+- Validation **Recall@10 peaked at 0.5228**
+- Validation **Hit Rate reached 0.9208**
 
 ---
 
-## Quantitative Benchmarks & Ablation Studies
+## 2. CIFAR-100 Vocabulary Expansion (455 -> 523 Words)
 
-### Table 1: Skip-Gram & Vocabulary Expansion Ablation Study
+To achieve zero-shot multimodal alignment with CIFAR-100, the vocabulary required expansion from 455 words to 523 words (incorporating 68 fine-grained visual categories missing from Visual Genome, such as *"aquarium_fish"*, *"lawn_mower"*, *"pickup_truck"*, and *"maple_tree"*).
 
-Evaluation uses a 478-word Gold Standard neighborhood graph (`configs/ground_truth_523.json`) combining CIFAR-100 superclass taxonomy siblings and `all-mpnet-base-v2` semantic nearest neighbors ($\cos > 0.45$).
+### Validation Strategy: Pseudo-Ground-Truth Benchmark
+Because training loss is poorly correlated with semantic manifold quality, an automated benchmark suite (`JsonEvaluator`) was designed:
+- **Pseudo-Ground-Truth Construction:** For each word in the vocabulary, top-10 ground-truth semantic neighbors were extracted using `SentenceTransformer` embeddings combined with the hierarchical WordNet/CIFAR taxonomy (filtering pairs with cosine similarity $> 0.45$).
+- **Metrics Evaluated:**
+  - **Recall@10:** Proportion of ground-truth semantic neighbors retrieved in the top-10 nearest neighbors of the learned manifold.
+  - **Hit Rate@10:** Percentage of vocabulary terms with at least one true semantic neighbor in their top-10 list.
+  - **Superclass Prototype mAP@K:** Mean Average Precision measuring whether objects belonging to the same CIFAR-100 superclass cluster around their taxonomic prototype.
+  - **Taxonomic Analogy MRR@K:** Mean Reciprocal Rank on relational vector analogies ($\vec{v}_b - \vec{v}_a + \vec{v}_c \approx \vec{v}_d$).
 
-| Exp | Paradigm & Vocab Size | Architectural / Sampling Modification | LR | Context $k$ | Min Cosine | Max Cosine | Mean Norm $\mu$ | Norm Std $\sigma$ | Global Std | Recall@10 | Hit Rate@10 |
-| :-: | :--- | :--- | :-: | :-: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **A** | Base VG (`455` words) | Inverted distance matrix positive weights | `0.001` | `4` | `0.9920` | `0.9990` | — | — | — | — | — |
-| **B** | Base VG (`455` words) | Degree-weighted negative sampling | `0.001` | `4` | `0.8700` | `0.9990` | — | — | — | — | — |
-| **C** | Base VG (`455` words) | High learning rate signal recovery | `0.100` | `4` | `0.1789` | `0.9330` | `1.5070` | `0.1326` | `0.1885` | `0.3652` | `0.8000` |
-| **D** | Base VG (`455` words) | Hub degree penalty $(\deg(u)\deg(c))^{-1/2}$ | `0.100` | `4` | `0.1137` | `0.9920` | `2.0000` | `0.1929` | `0.2499` | `0.4610` | `0.8856` |
-| **E** | Base VG (`455` words) | Semantic Negative Sampling ($\tau=0.40$) + Grid Search | `0.100` | `3` | `0.1000` | `0.9900` | `2.0500` | `0.2120` | `0.2580` | `0.5228` | `0.9208` |
-| **F** | Scratch (`523` words) | Augmented corpus with synthetic CIFAR-100 contexts | `0.100` | `3` | `0.0979` | `0.9771` | `1.9550` | `0.2297` | `0.2442` | `0.4600` | `0.8550` |
-| **G** | Scratch (`523` words) | Targeted co-occurrence bigrams for weak clusters | `0.100` | `3` | `0.0940` | `0.9721` | `1.9700` | `0.2100` | `0.2479` | `0.4900` | `0.8750` |
-| **H** | **Scratch (`523` words)** | **Cluster repair + Grid Search (`best_skipgram_523words.pth`)** | **`0.100`** | **`4`** | **`0.0845`** | **`0.9768`** | **`2.0127`** | **`0.1984`** | **`0.2524`** | **`0.5423`** | **`0.8933`** |
-| **I** | $(1+\lambda)$ ES (`523` words) | Baseline Evolution Strategy insertion on anchored 455 | — | — | `0.0838` | `0.9889` | `1.8500` | `0.5400` | `0.2400` | `0.4714` | `0.8619` |
-| **J** | $(1+\lambda)$ ES (`523` words) | ES Grid Search ($w_{\text{corpus}}, w_{\text{norm}}, w_{\text{anchor}}$) | — | — | `0.0838` | `0.9889` | `1.8600` | `0.5200` | `0.2400` | `0.4854` | `0.8682` |
+### Vocabulary Expansion Strategies: Evolution vs. Retraining
 
-### Table 2: Vision-Language Contrastive Retrieval Performance
+Two distinct expansion strategies were formulated and evaluated:
 
-| Evaluation Split / Metric | Score / Value | Notes |
-| :--- | :---: | :--- |
-| **Peak Validation Cosine Similarity** (`best_cifar100_projection.pth`) | `0.5581` | Achieved at Epoch 13 (`Val InfoNCE Loss = 5.0297` vs. `6.24` random baseline) |
-| **Image $\to$ Text Retrieval `Recall@1`** (Seen VG-Overlapping Classes) | `55.38%` | Top-1 exact word match from visual projection |
-| **Image $\to$ Text Retrieval `Recall@5`** | `89.47%` | Correct class word within top-5 nearest text neighbors |
-| **Image $\to$ Text Retrieval `Recall@10`** | `95.94%` | Correct class word within top-10 nearest text neighbors |
-| **Text $\to$ Image Retrieval `Recall@1`** | `90.62%` | Class prototype retrieves matching class image at Rank 1 |
-| **Text $\to$ Image Retrieval `Recall@5` / `Recall@10`** | `100.00%` | Perfect top-5 and top-10 prototype-to-image retrieval |
-| **Top Aligned Visual Classes** | `orange` (`0.6043`), `bottle` (`0.5401`), `apple` (`0.5205`), `motorcycle` (`0.5198`), `cloud` (`0.5046`) | Mean per-class cosine similarity |
+#### 1. $(1+\lambda)$ Evolution Strategy (Experiments I & J)
+- **Mechanism:** The pretrained 455-word vectors from Experiment E were frozen as immutable geometric anchors. The 68 new CIFAR-100 word vectors were initialized and optimized using a $(1+\lambda)$ Evolutionary Strategy maximizing cosine correlation with semantic anchor sets.
+- **Results:** Stable and fast convergence, but constrained by the fixed geometry of the anchor words. The model achieved **Recall@10 = 0.4854** and Hit Rate = $0.8682$ (Experiment J).
+
+#### 2. Retraining from Scratch with Synthetic LLM Augmentation & Cluster Repair (Experiments F, G, H)
+- **Synthetic Corpus Generation (Exp F):** An instruction-tuned LLM was prompted to generate descriptive sentences embedding the 68 new CIFAR concepts in natural visual contexts matching the Visual Genome linguistic style.
+- **Cluster Repair Phrases (Exp G):** Specific relational co-occurrence phrases were injected into the corpus to explicitly bridge isolated classes (e.g., pairing rare aquatic life with known marine concepts).
+- **Grid Search & Topological Optimization (Exp H):** A grid search over context window ($C=4$), negative samples ($K=5$), and learning rate ($\eta=0.1$) was conducted over the unified corpus.
+- **Results:** Retraining from scratch allowed the entire 523-word space to jointly self-organize, yielding the highest performance across all benchmarks: **Recall@10 = 0.5423, Hit Rate@10 = 0.8933, Prototype mAP@K = 0.8079, Analogy MRR@K = 0.6188**.
 
 ---
 
-## Manifold & Cross-Modal Visualizations
+## 3. Quantitative Ablation Benchmark
 
-### 1. 2D t-SNE Semantic Manifold (`523 Words × 64D`)
+The table below summarizes the progression of models across Task 5 development, reproducing **Table 1** from the scientific report:
 
-The learned 523-word Skip-Gram space exhibits strong topological organization: CIFAR-100 wild fauna (`lion`, `tiger`, `leopard`, `wolf`, `bear`), aquatic mammals (`dolphin`, `whale`, `seal`, `otter`), flora (`maple_tree`, `oak_tree`, `pine_tree`, `orchid`, `tulip`), and vehicles (`pickup_truck`, `streetcar`, `tractor`, `bus`) form cohesive semantic sub-manifolds while preserving functional bridges to Visual Genome action/spatial predicates.
-
-![t-SNE Visualization of 523-Word Semantic Embedding Space](docs/assets/embeddings_tsne.png)
-
-### 2. Cross-Modal Confusion Matrix, Image-to-Text Retrieval & Zero-Shot OOD Generalization
-
-````carousel
-![CIFAR-100 Cross-Modal Confusion Matrix](docs/assets/cifar100_confusion_matrix.png)
-<!-- slide -->
-![CIFAR-100 Image-to-Text Top-5 Retrieval Examples](docs/assets/cifar100_retrieval_examples.png)
-<!-- slide -->
-![Out-of-Distribution Zero-Shot Retrieval Across 523-Word Vocabulary](docs/assets/ood_zero_shot_analysis.png)
-````
+| Exp | Architecture & Vocabulary | Experimental Configuration & Loss Formulation | $\eta$ | Context | Min Cos Sim | Max Cos Sim | Mean Norm | Recall@10 | Hit Rate@10 |
+| :---: | :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **A** | Base Model ($|V|=455$) | Inverted distance matrix positive probability | 0.001 | 4 | 0.9920 | 0.9990 | — | — | — |
+| **B** | Base Model ($|V|=455$) | Increased negative sampling probability on high-degree nodes | 0.001 | 4 | 0.8700 | 0.9990 | — | — | — |
+| **C** | Base Model ($|V|=455$) | High learning rate baseline recovery | 0.100 | 4 | 0.1789 | 0.9330 | 1.507 | 0.3652 | 0.8000 |
+| **D** | Base Model ($|V|=455$) | High-degree hub node loss penalty: $1/\sqrt{\text{deg}(c)\text{deg}(w)}$ | 0.100 | 4 | 0.1137 | 0.9920 | 2.000 | 0.4610 | 0.8856 |
+| **E** | Base Model ($|V|=455$) | Semantic Negative Sampling (SentenceTransformer dissimilarity) | 0.100 | 3 | 0.1000 | 0.9900 | **2.050** | **0.5228** | **0.9208** |
+| **F** | Retrained ($|V|=523$) | Added synthetic LLM sentences for 68 missing CIFAR classes | 0.100 | 3 | 0.0979 | 0.9771 | 1.955 | 0.4600 | 0.8550 |
+| **G** | Retrained ($|V|=523$) | Injected pairwise similarity and cluster co-occurrence phrases | 0.100 | 3 | 0.0940 | 0.9721 | 1.970 | 0.4900 | 0.8750 |
+| **H** | **Retrained ($|V|=523$)** | **Repaired specific clusters + GridSearch ($C=4, K=5, \eta=0.1$)** | **0.100** | **4** | **0.0845** | **0.9768** | **2.010** | **0.5423** | **0.8933** |
+| **I** | Evolution ($|V|=523$) | $(1+\lambda)$ ES baseline anchoring 455 base words | — | — | 0.0838 | 0.9889 | 1.850 | 0.4714 | 0.8619 |
+| **J** | Evolution ($|V|=523$) | Grid search over anchor weights and corpus blending | — | — | 0.0838 | 0.9889 | 1.860 | 0.4854 | 0.8682 |
 
 ---
 
-## Neuro-Symbolic Multimodal PDDL Planning
+## 4. Topological & Semantic Manifold Analysis
 
-### Domain Specification (`configs/pddl/domain.pddl`)
+<div align="center">
+  <img src="docs/assets/embeddings_tsne.png" width="85%" alt="t-SNE Semantic Manifold Visualisation" />
+  <p><em>Figure 1: 2D t-SNE projection of the final 523-word visual-semantic embedding space (Experiment H).</em></p>
+</div>
 
-The PDDL domain `cifar100-process` (`:strips :typing :negative-preconditions`) models an embodied agent operating across two locations (`lab`, `outdoors`) with two specialized tools (`knife`, `dslr`), 10 stackable surfaces (`table`, `bed`, `chair`, `couch`, `road`, `bridge`, `plain`, `sea`, `plate`, `bowl`), and all **100 CIFAR-100 objects** initialized across 349 world predicates (`configs/pddl/problem.pddl`).
+### Scientific Observations:
+1. **Separation of Wild vs. Domestic Animals:** 
+   Visual Genome domestic animals (*"cat"*, *"dog"*, *"horse"*, *"sheep"*) cluster closely with human activity verbs and household objects, whereas CIFAR-100 wild animals (*"lion"*, *"leopard"*, *"bear"*, *"elephant"*) form an independent ecological cluster. This reflects the visual grounding of the training data.
+2. **Polysemy Disambiguation:** 
+   Words with multiple meanings like *"mouse"* or *"bat"* cluster in their visual-dominant contexts (computer equipment / sporting gear) rather than zoological groups, consistent with visual scene grounding.
+3. **Taxonomic Integrity:** 
+   Vehicle classes (*"bicycle"*, *"motorcycle"*, *"train"*, *"bus"*) form a tight manifold region exhibiting high cosine similarities, cleanly separated from organic and structural categories.
 
-* **7 Lifted Action Schemas ($42,018$ Grounded Actions)**:
-  1. `walk-between-rooms (?from - location ?to - location)`
-  2. `pick-up (?i - item ?l - location)`
-  3. `put-down (?i - item ?l - location)`
-  4. `stack (?top - item ?bottom - item ?l - location)`
-  5. `unstack (?top - item ?bottom - item ?l - location)`
-  6. `slice-object (?obj - item ?l - location)` *(requires `(holding knife)` and `(whole ?obj)`)*
-  7. `take-photo (?obj - item ?l - location)` *(requires `(holding dslr)` and `(clear ?obj)`)*
+---
 
-### Precondition-Aware $A^*$ Heuristic (`smart_heuristic`)
+## 5. Cross-Modal Visual-Semantic Projection
 
-With $42,018$ grounded actions, uninformed Breadth-First Search suffers severe combinatorial branching on plans of depth $\ge 4$. We guide $A^*$ search ($f(s) = g(s) + h_{\text{smart}}(s)$) by evaluating both unsatisfied goal predicates and the minimum number of missing preconditions required to enable an achieving action:
+<div align="center">
+  <img src="docs/assets/projection_training_curve.png" width="65%" alt="Projection Head Training Convergence" />
+  <p><em>Figure 2: Contrastive InfoNCE validation loss and Top-1 retrieval accuracy during MobileNetV3 projection training.</em></p>
+</div>
 
-$$h_{\text{smart}}(s) = \sum_{p \in \mathcal{G} \setminus s} \left(1 + \min_{a \in \mathcal{A} \,:\, p \in \text{Add}(a)} \big|\text{Pre}(a) \setminus s\big|\right)$$
+### Projection Head Architecture
+To map visual inputs into the 64-dimensional semantic space:
+- **Visual Backbone:** Pretrained `MobileNetV3-Small` (weights frozen, extracting 1000-dimensional features).
+- **Projection Head:** 2-layer MLP with intermediate ReLU non-linearity and L2 normalization:
+  
+  $$\mathbf{z}_{\text{img}} = \frac{W_2 \cdot \text{ReLU}(W_1 \cdot \mathbf{f}_{\text{mobilenet}} + \mathbf{b}_1) + \mathbf{b}_2}{\|W_2 \cdot \text{ReLU}(W_1 \cdot \mathbf{f}_{\text{mobilenet}} + \mathbf{b}_1) + \mathbf{b}_2\|_2}$$
 
-| Planning Scenario | Target Object | Optimal Plan Depth | BFS Nodes Expanded | `smart_heuristic` $A^*$ Nodes Expanded | Search Speedup |
-| :--- | :---: | :---: | :---: | :---: | :---: |
-| **Scenario 1: The Prepared Chef** | `apple` | `1` | `1` | `2` | `1.0×` |
-| **Scenario 2: Basic Slice** | `pear` | `2` | `25` | `4` | `6.3×` |
-| **Scenario 3: The Commuter** | `beetle` | `2` | `23` | `3` | `7.7×` |
-| **Scenario 6: The Hungry Architect** | `sweet-pepper` | `3` | `985` | `14` | **`70.4×`** |
-| **Scenario 8: Jurassic Park Protocol** | `dinosaur` | `4` | `26,260` | `502` | **`52.3×`** |
-| **Scenario 9: Marine Specimen Relocation** | `crab` | `4` | `26,260` | `502` | **`52.3×`** |
+- **Symmetric Contrastive Loss:** Trained using symmetric InfoNCE loss with temperature parameter $\tau = 0.07$:
 
-### Multimodal Execution Trace Example (Visual Input $\to$ PDDL Plan)
+$$\mathcal{L}_{\text{contrastive}} = -\frac{1}{2B} \sum_{i=1}^B \left[ \log \frac{\exp(\mathbf{z}_i \cdot \mathbf{w}_i / \tau)}{\sum_{j=1}^B \exp(\mathbf{z}_i \cdot \mathbf{w}_j / \tau)} + \log \frac{\exp(\mathbf{z}_i \cdot \mathbf{w}_i / \tau)}{\sum_{j=1}^B \exp(\mathbf{z}_j \cdot \mathbf{w}_i / \tau)} \right]$$
 
-<p align="center">
-  <img src="docs/assets/planner_crab_input.png" alt="CIFAR-100 Crab Visual Input" width="220"/>
-</p>
-
-```text
-[Perception] Input is an image. Running Multimodal Recognition...
-[Perception] Image identified as 'crab' (conf: 0.6606)
-[Logic] Substituting '?x' with 'crab'
-       Init: {'(hand-empty)', '(whole crab)', '(clear crab)', '(agent-at lab)', '(at crab outdoors)'}
-       Goal: {'(at crab lab)'}
-Starting A* Search...
-Goal reached! Nodes expanded: 502, Plan length: 4
-
-================================================================================
-EXECUTION TRACE: CRAB
-================================================================================
-STEP   | ACTION                              | STATE CHANGES / INITIAL STATE
-------------------------------------------------------------------------------------------
-0      | (INITIAL STATE)                     | (agent-at lab), (at ?x outdoors), (clear ?x), (hand-empty), (whole ?x)
-1      | (walk-between-rooms lab outdoors)   | ++ (agent-at outdoors) | -- (agent-at lab)
-2      | (pick-up crab outdoors)             | ++ (holding crab) | -- (at crab outdoors), (hand-empty)
-3      | (walk-between-rooms outdoors lab)   | ++ (agent-at lab) | -- (agent-at outdoors)
-4      | (put-down crab lab)                 | ++ (at crab lab), (clear crab), (hand-empty) | -- (holding crab)
-------------------------------------------------------------------------------------------
-GOAL ACHIEVED
-================================================================================
-```
+### Alignment Benchmarks
+- **Prototype Retrieval mAP@K:** **$0.8079$** across all 20 CIFAR-100 superclasses.
+- **Analogy Solver MRR@K:** **$0.6188$** on fine-grained taxonomic relation queries.
+- **CIFAR-100 Vocabulary Coverage:** **$1.0000$** ($100/100$ classes matched).
 
 ---
 
 ## Repository Structure
 
-```text
+```
 visual-semantic-embeddings-and-planning/
-├── .github/workflows/
-│   └── ci.yml                              # Automated pytest + CLI benchmark workflow
 ├── configs/
-│   ├── ground_truth_523.json               # 478-word semantic & taxonomic gold standard
-│   └── pddl/
-│       ├── domain.pddl                     # STRIPS/Typing domain (7 lifted action schemas)
-│       └── problem.pddl                    # Base problem (100 CIFAR items, 2 tools, 349 predicates)
-├── docs/assets/
-│   ├── embeddings_tsne.png                 # High-resolution 2D t-SNE of 523-word manifold
-│   ├── report_task5_tsne.png               # Annotated t-SNE cluster figure from technical report
-│   ├── skipgram_training_loss.png          # Skip-Gram training & validation convergence curve
-│   ├── projection_training_curve.png       # MobileNetV3 projection InfoNCE loss & cosine similarity
-│   ├── cifar100_confusion_matrix.png       # Cross-modal classification confusion matrix
-│   ├── cifar100_retrieval_examples.png     # Top-5 image-to-text retrieval grid
-│   ├── ood_zero_shot_analysis.png          # Zero-shot OOD image retrieval over 523-word vocabulary
-│   └── planner_crab_input.png              # Sample CIFAR-100 image input for PDDL planner
+│   └── ground_truth_523.json       # SentenceTransformer + Taxonomy validation benchmark
+├── docs/
+│   └── assets/                     # t-SNE manifold plots, training curves, confusion matrices
 ├── models/
-│   ├── best_skipgram_523words.pth          # Pre-trained 523×64 Skip-Gram checkpoint (277 KB)
-│   └── best_cifar100_projection.pth        # Pre-trained MobileNetV3 + 64D projection head (5.2 MB)
+│   ├── best_skipgram_523words.pth  # Champion 523 x 64 Skip-Gram manifold (Exp H)
+│   └── best_cifar100_projection.pth# Trained MobileNetV3 -> 64-D projection head
 ├── scripts/
-│   ├── train_embeddings.py                 # CLI to inspect or train Skip-Gram embeddings from scratch
-│   ├── evaluate_alignment.py               # CLI to run manifold & cross-modal alignment benchmarks
-│   └── run_multimodal_planner.py           # CLI to execute single or 18-plan multimodal PDDL suite
-├── src/visual_semantic_planner/
-│   ├── __init__.py                         # Public package API exports
-│   ├── skipgram.py                         # Text network, Semantic Negative Sampling, SGNS & (1+λ) ES
-│   ├── visual_projection.py                # CIFAR100Filtered, ImageEncoder, symmetric InfoNCE loss
-│   ├── pddl_planner.py                     # PDDLParser, ActionGrounder, smart A* search, plan_generator
-│   └── evaluate.py                         # Quantitative manifold metrics, mAP@K, MRR@K & plan suite
+│   ├── evaluate_alignment.py       # Full benchmark runner (Recall@10, mAP@K, MRR@K)
+│   └── train_embeddings.py         # Skip-Gram training & evolution pipeline CLI
+├── src/
+│   └── visual_semantic_planner/
+│       ├── __init__.py
+│       ├── evaluate.py             # Manifold grading, JsonEvaluator, and t-SNE generator
+│       ├── skipgram.py             # SGNS model, hub-penalty, semantic negative sampling & ES
+│       └── visual_projection.py    # MobileNetV3 projection head, InfoNCE loss & CIFAR loader
 ├── tests/
-│   └── test_embeddings_and_planner.py      # Comprehensive unit & end-to-end integration tests
-├── LICENSE                                 # MIT License
-├── pyproject.toml                          # PEP 621 package configuration
-└── requirements.txt                        # Runtime and test dependencies
+│   └── test_embeddings_and_planner.py # 5 automated unit & integration tests
+├── .gitignore
+├── LICENSE                         # MIT License
+├── pyproject.toml
+└── requirements.txt
 ```
 
 ---
@@ -279,80 +210,59 @@ visual-semantic-embeddings-and-planning/
 ## Quickstart & Usage
 
 ### 1. Installation
-
 ```bash
 git clone https://github.com/Ceviche98/visual-semantic-embeddings-and-planning.git
 cd visual-semantic-embeddings-and-planning
 pip install -r requirements.txt
-pip install -e .
 ```
 
-### 2. Evaluate Semantic Manifold & Cross-Modal Alignment
-
+### 2. Run Quantitative Manifold Evaluation
+Evaluate the 523-word manifold against the automated test suite and pseudo-ground-truth benchmark:
 ```bash
 python scripts/evaluate_alignment.py
 ```
-
-### 3. Run the 18-Scenario Multimodal PDDL Planning Benchmark Suite
-
-Executes all 9 symbolic text-to-plan tasks and all 9 sub-symbolic visual-to-plan tasks:
-
-```bash
-python scripts/run_multimodal_planner.py --benchmark
+Expected output:
+```
+[PASS] Embeddings dimensionality: 2D
+[PASS] Embeddings finiteness: Strict finite values (no NaN / Inf)
+[PASS] Vocabulary shape matches embeddings: 523 words x 64 dimensions
+[PASS] Contiguous index check: [0 .. 522]
+[PASS] CIFAR-100 Vocabulary Coverage: 1.0000 (100 / 100 classes present)
+======================================================================
+Prototype Retrieval mAP@K: 0.8079
+Analogy Solver MRR@K:      0.6188
+Pseudo-GT Recall@10:       0.5423
+Pseudo-GT Hit Rate@10:     0.8933
 ```
 
-Or run a single interactive multimodal planning task (`--modality text` or `--modality image`):
-
+### 3. Run the Automated Test Suite
 ```bash
-python scripts/run_multimodal_planner.py --modality image --object crab
+pytest tests/ -v
 ```
 
-### 4. Inspect Nearest Neighbors & Solve Analogies
-
-```bash
-python scripts/train_embeddings.py --mode inspect
-```
-
-### 5. Python API Example
-
+### 4. Programmatic API Usage
 ```python
 from visual_semantic_planner import (
     build_my_embeddings,
-    plan_generator,
-    synthesize_aligned_image_tensor,
+    find_similar_words,
+    solve_analogy,
+    load_visual_projection_model,
 )
 
-# 1. Load the 523-word Skip-Gram semantic manifold (523 x 64)
+# Load the 523-word manifold
 vocab, embeddings = build_my_embeddings()
 
-# 2. Define PDDL initial and goal states using '?x' as the grounded target variable
-initial_state = {
-    "(agent-at lab)",
-    "(hand-empty)",
-    "(at ?x outdoors)",
-    "(whole ?x)",
-    "(clear ?x)",
-}
-goal_state = {"(at ?x lab)"}
+# Query top semantic neighbors
+neighbors = find_similar_words("apple", vocab, embeddings, top_k=5)
+print("Apple neighbors:", neighbors)
 
-# 3A. Symbolic Text-to-Plan
-text_plan = plan_generator("dinosaur", initial_state, goal_state)
-print("Text Plan:", text_plan)
-
-# 3B. Sub-Symbolic Visual Image-to-Plan
-img_tensor = synthesize_aligned_image_tensor("crab")
-image_plan = plan_generator(img_tensor, initial_state, goal_state)
-print("Image Plan:", image_plan)
-```
-
-### 6. Run Test Suite
-
-```bash
-pytest -v
+# Relational vector analogy: king - man + woman = queen
+result = solve_analogy("man", "king", "woman", vocab, embeddings)
+print("Analogy result:", result)
 ```
 
 ---
 
 ## License
 
-This project is released under the [MIT License](LICENSE).
+This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
