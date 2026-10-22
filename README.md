@@ -122,16 +122,16 @@ The table below summarizes the progression of models across Task 5 development, 
 
 | Exp | Architecture & Vocabulary | Experimental Configuration & Loss Formulation | $\eta$ | Context | Min Cos Sim | Max Cos Sim | Mean Norm | Recall@10 | Hit Rate@10 |
 | :---: | :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **A** | Base Model ($|V|=455$) | Inverted distance matrix positive probability | 0.001 | 4 | 0.9920 | 0.9990 | — | — | — |
-| **B** | Base Model ($|V|=455$) | Increased negative sampling probability on high-degree nodes | 0.001 | 4 | 0.8700 | 0.9990 | — | — | — |
+| **A** | Base Model ($|V|=455$) | Inverted distance matrix positive probability | 0.001 | 4 | 0.9920 | 0.9990 | - |: | - |
+| **B** | Base Model ($|V|=455$) | Increased negative sampling probability on high-degree nodes | 0.001 | 4 | 0.8700 | 0.9990 | - |: | - |
 | **C** | Base Model ($|V|=455$) | High learning rate baseline recovery | 0.100 | 4 | 0.1789 | 0.9330 | 1.507 | 0.3652 | 0.8000 |
 | **D** | Base Model ($|V|=455$) | High-degree hub node loss penalty: $1/\sqrt{\text{deg}(c)\text{deg}(w)}$ | 0.100 | 4 | 0.1137 | 0.9920 | 2.000 | 0.4610 | 0.8856 |
 | **E** | Base Model ($|V|=455$) | Semantic Negative Sampling (SentenceTransformer dissimilarity) | 0.100 | 3 | 0.1000 | 0.9900 | **2.050** | **0.5228** | **0.9208** |
 | **F** | Retrained ($|V|=523$) | Added synthetic LLM sentences for 68 missing CIFAR classes | 0.100 | 3 | 0.0979 | 0.9771 | 1.955 | 0.4600 | 0.8550 |
 | **G** | Retrained ($|V|=523$) | Injected pairwise similarity and cluster co-occurrence phrases | 0.100 | 3 | 0.0940 | 0.9721 | 1.970 | 0.4900 | 0.8750 |
 | **H** | **Retrained ($|V|=523$)** | **Repaired specific clusters + GridSearch ($C=4, K=5, \eta=0.1$)** | **0.100** | **4** | **0.0845** | **0.9768** | **2.010** | **0.5423** | **0.8933** |
-| **I** | Evolution ($|V|=523$) | $(1+\lambda)$ ES baseline anchoring 455 base words | — | — | 0.0838 | 0.9889 | 1.850 | 0.4714 | 0.8619 |
-| **J** | Evolution ($|V|=523$) | Grid search over anchor weights and corpus blending | — | — | 0.0838 | 0.9889 | 1.860 | 0.4854 | 0.8682 |
+| **I** | Evolution ($|V|=523$) | $(1+\lambda)$ ES baseline anchoring 455 base words | - |: | 0.0838 | 0.9889 | 1.850 | 0.4714 | 0.8619 |
+| **J** | Evolution ($|V|=523$) | Grid search over anchor weights and corpus blending | - |: | 0.0838 | 0.9889 | 1.860 | 0.4854 | 0.8682 |
 
 ---
 
@@ -265,4 +265,4 @@ print("Analogy result:", result)
 
 ## License
 
-This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License: see the [LICENSE](LICENSE) file for details.
