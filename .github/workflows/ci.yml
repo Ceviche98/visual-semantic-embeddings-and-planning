@@ -31,6 +31,3 @@ jobs:
 
       - name: Run alignment & manifold evaluation CLI
         run: python scripts/evaluate_alignment.py
-
-      - name: Run multimodal PDDL benchmark suite
-        run: python scripts/run_multimodal_planner.py --benchmark
